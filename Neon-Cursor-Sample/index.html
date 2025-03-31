@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Grid Interactive</title>
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            position: absolute;
+        }
+        .name {
+            position: absolute;
+            top: 10%;
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px white, 0 0 20px cyan;
+            animation: glitch 0.5s infinite alternate;
+        }
+        @keyframes glitch {
+            0% { transform: skewX(0deg); text-shadow: 0 0 10px white, 0 0 20px cyan; }
+            25% { transform: skewX(5deg); text-shadow: 0 0 15px red, 0 0 25px blue; }
+            50% { transform: skewX(-5deg); text-shadow: 0 0 20px green, 0 0 30px magenta; }
+            75% { transform: skewX(5deg); text-shadow: 0 0 15px yellow, 0 0 25px purple; }
+            100% { transform: skewX(0deg); text-shadow: 0 0 10px white, 0 0 20px cyan; }
+        }
+    </style>
+</head>
+<body>
+    <div class="name">Hanricus.code</div>
+    <canvas id="neonCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('neonCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor(x, y, angle, speed, size) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.angle = angle;
+                this.speed = speed;
+                this.life = 100;
+                this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+            }
+            update() {
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.life--;
+                if (this.size > 0.2) this.size -= 0.1;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particles = [];
+        let explosionSize = 50;
+        let holding = false;
+        let holdTimer;
+
+        function createParticle(e) {
+            for (let i = 0; i < 5; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let speed = Math.random() * 3 + 1;
+                let size = Math.random() * 5 + 2;
+                particles.push(new Particle(e.x, e.y, angle, speed, size));
+            }
+        }
+
+        function explodeParticles(e) {
+            holding = true;
+            holdTimer = setInterval(() => {
+                explosionSize += 10;
+            }, 100);
+        }
+
+        function releaseExplosion(e) {
+            clearInterval(holdTimer);
+            let megaExplosionSize = explosionSize * 3; // Mega besar letupan
+            for (let i = 0; i < megaExplosionSize; i++) {
+                let angle = (i / megaExplosionSize) * Math.PI * 2;
+                let speed = Math.random() * 8 + 2;
+                let size = Math.random() * 8 + 5;
+                particles.push(new Particle(e.x, e.y, angle, speed, size));
+            }
+            explosionSize = 50;
+            holding = false;
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((particle, index) => {
+                particle.update();
+                particle.draw();
+                if (particle.life <= 0 || particle.size <= 0.2) {
+                    particles.splice(index, 1);
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', createParticle);
+        window.addEventListener('mousedown', explodeParticles);
+        window.addEventListener('mouseup', releaseExplosion);
+        animate();
+    </script>
+</body>
+</html>
